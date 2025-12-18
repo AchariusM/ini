@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id       String @id @default(uuid())
+  nama     String
+  username String @unique
+  password String
+  role     Role   @default(KASIR)
+
+  @@map("users")
+}
+
+model MenuItem {
+  id        Int      @id @default(autoincrement())
+  nama      String
+  harga     Decimal  @db.Decimal(10, 2)
+  kategori  String?
+  deskripsi String?
+  aktif     Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+
+  @@map("menu")
+}
+
+model Feedback {
+  id        Int      @id @default(autoincrement())
+  nama      String?
+  email     String?
+  pesan     String
+  rating    Int?
+  sumber    String?
+  createdAt DateTime @default(now())
+  laporan   Laporan? @relation("LaporanFeedback")
+
+  @@map("feedback")
+}
+
+model Laporan {
+  id             Int       @id @default(autoincrement())
+  judul          String
+  rangkuman      String?
+  periodeMulai   DateTime?
+  periodeSelesai DateTime?
+  dibuatOleh     String?
+  feedbackId     Int?      @unique
+  createdAt      DateTime  @default(now())
+  feedback       Feedback? @relation("LaporanFeedback", fields: [feedbackId], references: [id])
+
+  @@map("laporan")
+}
+
+model Karyawan {
+  id        Int      @id @default(autoincrement())
+  nama      String
+  jabatan   String
+  kontak    String?
+  gaji      Decimal? @db.Decimal(12, 2)
+  aktif     Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+
+  @@map("karyawan")
+}
+
+model Sisa {
+  id       Int    @id @default(autoincrement())
+  nama     String
+  jumlah   Float
+  satuan   String
+  kategori String
+
+  @@map("sisa")
+}
+
+enum Role {
+  OWNER
+  KASIR
+  HEAD_KITCHEN
+}

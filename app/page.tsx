@@ -1,33 +1,60 @@
-import AcmeLogo from '@/app/ui/acme-logo';
-import { ArrowRightIcon } from '@heroicons/react/24/outline';
-import Link from 'next/link';
+"use client";
 
-export default function Page() {
+import Image from "next/image";
+import Link from "next/link";
+
+export default function HomePage() {
   return (
-    <main className="flex min-h-screen flex-col p-6">
-      <div className="flex h-20 shrink-0 items-end rounded-lg bg-blue-500 p-4 md:h-52">
-        {/* <AcmeLogo /> */}
+    <main className="relative min-h-screen text-white overflow-hidden">
+      <div className="absolute inset-0">
+        <Image
+          src="/warungoyako.jpeg"
+          alt="Warung Oyako"
+          fill
+          priority
+          className="object-cover"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-black/55" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/70" />
       </div>
-      <div className="mt-4 flex grow flex-col gap-4 md:flex-row">
-        <div className="flex flex-col justify-center gap-6 rounded-lg bg-gray-50 px-6 py-10 md:w-2/5 md:px-20">
-          <p className={`text-xl text-gray-800 md:text-3xl md:leading-normal`}>
-            <strong>Welcome to Acme.</strong> This is the example for the{' '}
-            <a href="https://nextjs.org/learn/" className="text-blue-500">
-              Next.js Learn Course
-            </a>
-            , brought to you by Vercel.
-          </p>
-          <Link
-            href="/login"
-            className="flex items-center gap-5 self-start rounded-lg bg-blue-500 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-400 md:text-base"
-          >
-            <span>Log in</span> <ArrowRightIcon className="w-5 md:w-6" />
-          </Link>
+
+      <header className="relative z-10 flex items-center justify-between px-6 md:px-12 py-6">
+        <div className="flex items-center gap-3 bg-black/50 backdrop-blur-md px-3 py-2 rounded-full border border-white/10 shadow-lg">
+          <div className="relative w-12 h-12 overflow-hidden rounded-full border border-white/30">
+            <Image src="/logooyako.jpeg" alt="Warung Oyako" fill className="object-cover" sizes="48px" />
+          </div>
+          <div className="text-sm uppercase tracking-[0.2em] text-yellow-200 font-semibold">
+            Warung Oyako
+          </div>
         </div>
-        <div className="flex items-center justify-center p-6 md:w-3/5 md:px-28 md:py-12">
-          {/* Add Hero Images Here */}
+
+        <Link
+          href="/login"
+          className="text-sm md:text-base bg-white/80 text-gray-900 px-4 py-2 md:px-5 md:py-2.5 rounded-full font-semibold shadow-lg hover:bg-white transition"
+        >
+          Masuk
+        </Link>
+      </header>
+
+      <section className="relative z-10 flex flex-col items-center justify-center text-center px-6 md:px-10 pt-10 md:pt-20 pb-16 md:pb-24 gap-6">
+        <div className="text-xs md:text-sm uppercase tracking-[0.3em] text-yellow-300 font-semibold">
+          Warung Oyako
         </div>
-      </div>
+        <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold leading-tight max-w-4xl drop-shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
+          SIKP — Sistem Informasi Kepuasan Pelanggan
+        </h1>
+        <p className="text-base md:text-lg text-white/90 max-w-2xl drop-shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
+          Kelola menu, karyawan, laporan, dan feedback pelanggan secara efisien dalam satu dashboard.
+        </p>
+        <Link
+          href="/login"
+          className="mt-4 inline-flex items-center gap-2 bg-amber-400 text-black font-semibold px-6 py-3 md:px-8 md:py-4 rounded-full shadow-xl hover:bg-amber-300 hover:translate-y-[-1px] transition"
+        >
+          Mulai Sekarang
+          <span aria-hidden>→</span>
+        </Link>
+      </section>
     </main>
   );
 }
