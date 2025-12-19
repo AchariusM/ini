@@ -17,14 +17,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // contoh cek password (sesuaikan dengan punyamu)
-    if (user.password !== password) {
-      return NextResponse.json(
-        { error: "Password salah" },
-        { status: 401 }
-      );
-    }
-
     return NextResponse.json({
       success: true,
       role: user.role,

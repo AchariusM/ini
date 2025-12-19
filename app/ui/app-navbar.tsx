@@ -5,10 +5,16 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
-const NAV_ITEMS = [
+type NavItem = {
+  title: string;
+  href: string;
+  exact?: boolean;
+};
+
+const NAV_ITEMS: NavItem[] = [
   { title: "Menu", href: "/menu" },
   { title: "Karyawan", href: "/karyawan" },
-  { title: "Laporan", href: "/laporan" },
+  { title: "Laporan", href: "/laporan", exact: true },
   { title: "Feedback", href: "/laporan/feedback" },
 ];
 
@@ -33,7 +39,9 @@ export default function AppNavbar() {
       <nav className="flex-1 flex justify-center">
         <div className="flex items-center gap-6 text-xs md:text-sm font-semibold tracking-[0.15em] uppercase">
           {NAV_ITEMS.map((item) => {
-            const active = pathname.startsWith(item.href);
+            const active = item.exact
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <Link
                 key={item.title}
