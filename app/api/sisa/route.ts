@@ -1,10 +1,55 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from 'next/server'
+import { prisma } from '@/app/lib/prisma'
 
+export const runtime = 'nodejs'
+
+// PUT = update data by id
 export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  req: Request,
+  context: { params: { id: string } }
 ) {
-  const id = params.id;
+  try {
+    const body = await req.json()
+    const { nama, jumlah, satuan, kategori } = body
 
-  return NextResponse.json({ id });
+    const id = Number(context.params.id)
+
+    const updated = await prisma.sisa.update({
+      where: { id },
+      data: {
+        nama,
+        jumlah: Number(jumlah),
+        satuan,
+        kategori,
+      },
+    })
+
+    return NextResponse.json(updated)
+  } catch (error) {
+    console.error(error)
+    return NextResponse.json(
+      { error: 'Gagal update data' },
+      { status: 500 }
+    )
+  }
+}
+
+// DELETE data by id
+export async function DELETE(
+  _req: Request,
+  context: { params: { id: string } }
+) {
+  try {
+    const id = Number(context.params.id)
+
+    await prisma.sisa.delete({ where: { id } })
+
+    return NextResponse.json({ message: 'Data berhasil dihapus' })
+  } catch (error) {
+    console.error(error)
+    return NextResponse.json(
+      { error: 'Gagal menghapus data' },
+      { status: 500 }
+    )
+  }
 }
