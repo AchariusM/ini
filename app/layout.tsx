@@ -3,7 +3,7 @@ import { inter } from '@/app/ui/fonts';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'SIKP — Sistem Informasi Kepuasan Pelanggan',
+  title: 'SIKP - Sistem Informasi Kepuasan Pelanggan',
   description: 'Kelola data kepuasan pelanggan dan operasional dalam satu dashboard.',
 };
 

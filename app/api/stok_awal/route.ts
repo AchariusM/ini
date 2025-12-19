@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/app/lib/prisma";
 
 // GET dengan filter kategori (BAHAN / PRODUK)
 export async function GET(req: Request) {

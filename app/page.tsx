@@ -42,7 +42,7 @@ export default function HomePage() {
           Warung Oyako
         </div>
         <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold leading-tight max-w-4xl drop-shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
-          SIKP — Sistem Informasi Kepuasan Pelanggan
+          SIKP - Sistem Informasi Kepuasan Pelanggan
         </h1>
         <p className="text-base md:text-lg text-white/90 max-w-2xl drop-shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
           Kelola menu, karyawan, laporan, dan feedback pelanggan secara efisien dalam satu dashboard.
@@ -52,7 +52,7 @@ export default function HomePage() {
           className="mt-4 inline-flex items-center gap-2 bg-amber-400 text-black font-semibold px-6 py-3 md:px-8 md:py-4 rounded-full shadow-xl hover:bg-amber-300 hover:translate-y-[-1px] transition"
         >
           Mulai Sekarang
-          <span aria-hidden>→</span>
+          <span aria-hidden="true">-&gt;</span>
         </Link>
       </section>
     </main>

@@ -7,23 +7,8 @@ import Image from "next/image";
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [captcha, setCaptcha] = useState("");
-  const [inputCaptcha, setInputCaptcha] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
-
-  const generateCaptcha = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let code = "";
-    for (let i = 0; i < 5; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setCaptcha(code);
-  };
-
-  useEffect(() => {
-    generateCaptcha();
-  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -31,13 +16,6 @@ export default function LoginPage() {
 
     if (!username || !password) {
       setError("Username dan password wajib diisi!");
-      return;
-    }
-
-    if (inputCaptcha !== captcha) {
-      setError("Captcha salah!");
-      generateCaptcha();
-      setInputCaptcha("");
       return;
     }
 
@@ -58,23 +36,15 @@ export default function LoginPage() {
 
       const data = await res.json();
 
-      if (!res.ok) {
-        setError(data?.message ?? "Server error.");
-        return;
-      }
-
-      if (!data.success) {
-        setError(data.message);
+      if (!res.ok || !data.success) {
+        setError(data?.error ?? data?.message ?? "Server error.");
         return;
       }
 
       localStorage.setItem("login", "true");
+      if (data.role) localStorage.setItem("role", String(data.role));
 
-      const role = (data.role as string | undefined)?.toUpperCase();
-      if (role === "OWNER") router.replace("/user/HK");
-      else if (role === "KASIR") router.replace("/user/kasir");
-      else if (role === "HEAD_KITCHEN") router.replace("/user/HK");
-      else router.replace("/");
+      router.replace("/dashboard");
     } catch (err) {
       console.error(err);
       setError("Terjadi kesalahan pada server.");
@@ -128,30 +98,6 @@ export default function LoginPage() {
                 placeholder="Masukkan password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-white/20 bg-black/30 px-3 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-400/70 focus:border-emerald-400/60"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm text-white/80">Captcha</label>
-              <div className="flex items-center gap-3">
-                <div className="bg-emerald-600 text-white font-bold px-4 py-2 rounded select-none tracking-wider shadow">
-                  {captcha}
-                </div>
-                <button
-                  type="button"
-                  onClick={generateCaptcha}
-                  className="text-emerald-300 hover:text-emerald-200 text-lg"
-                  aria-label="Muat ulang captcha"
-                >
-                  Reload
-                </button>
-              </div>
-              <input
-                type="text"
-                placeholder="Masukkan captcha"
-                value={inputCaptcha}
-                onChange={(e) => setInputCaptcha(e.target.value)}
                 className="w-full rounded-lg border border-white/20 bg-black/30 px-3 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-400/70 focus:border-emerald-400/60"
               />
             </div>
