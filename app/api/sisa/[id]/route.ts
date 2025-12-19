@@ -1,14 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/prisma'
 
 export const runtime = 'nodejs'
 
 // PUT = update data by id
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, context: { params: { id: string } }) {
   try {
     const body = await req.json()
     const { nama, jumlah, satuan, kategori } = body
-    const id = parseInt(params.id)
+    const id = parseInt(context.params.id)
 
     const updated = await prisma.sisa.update({
       where: { id },
@@ -22,9 +22,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 // DELETE data by id
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, context: { params: { id: string } }) {
   try {
-    const id = parseInt(params.id)
+    const id = parseInt(context.params.id)
     await prisma.sisa.delete({ where: { id } })
     return NextResponse.json({ message: 'Data berhasil dihapus' })
   } catch (error) {
