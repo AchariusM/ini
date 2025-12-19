@@ -14,6 +14,12 @@ const transaksiDummy: Transaksi[] = [
   { id: "TRX #2025002", waktu: "2025-11-24T19:10:00", total: 89000 },
   { id: "TRX #2025003", waktu: "2025-11-23T11:20:00", total: 56000 },
   { id: "TRX #2025004", waktu: "2025-11-22T09:05:00", total: 99000 },
+  { id: "TRX #2025005", waktu: "2025-11-21T14:30:00", total: 75000 },
+  { id: "TRX #2025006", waktu: "2025-11-20T18:10:00", total: 134000 },
+  { id: "TRX #2025007", waktu: "2025-11-20T08:55:00", total: 43000 },
+  { id: "TRX #2025008", waktu: "2025-11-19T20:40:00", total: 158000 },
+  { id: "TRX #2025009", waktu: "2025-11-18T13:15:00", total: 67000 },
+  { id: "TRX #2025010", waktu: "2025-11-17T10:05:00", total: 91000 },
 ];
 
 const formatRupiah = (value: number) =>
