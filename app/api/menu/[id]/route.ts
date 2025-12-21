@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 export const runtime = "nodejs";
 
@@ -22,12 +23,13 @@ export async function PUT(req: Request, { params }: Context) {
     const id = Number(params.id);
     const body = await req.json();
     const { nama, harga, kategori, deskripsi, aktif } = body;
+    const hargaNum = Number(harga);
 
     const updated = await prisma.menuItem.update({
       where: { id },
       data: {
         nama,
-        harga,
+        harga: Number.isFinite(hargaNum) ? new Prisma.Decimal(hargaNum) : undefined,
         kategori,
         deskripsi,
         aktif,

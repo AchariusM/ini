@@ -1,22 +1,17 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MagnifyingGlassIcon, PlusIcon } from "@heroicons/react/24/outline";
 import AppNavbar from "../ui/app-navbar";
 
 type Karyawan = {
-  id: string;
+  id: number;
   nama: string;
   jabatan: string;
-  kontak: string;
+  kontak?: string | null;
+  gaji?: number | null;
   aktif: boolean;
 };
-
-const defaultData: Karyawan[] = [
-  { id: "101", nama: "Robin San", jabatan: "Owner", kontak: "0812-1111-2222", aktif: true },
-  { id: "102", nama: "Bolon Susanto", jabatan: "Head Chef", kontak: "0813-8888-9999", aktif: true },
-  { id: "103", nama: "Rita Anggraini", jabatan: "Kasir", kontak: "0812-5555-1010", aktif: true },
-];
 
 const getInitials = (nama: string) =>
   nama
@@ -27,11 +22,38 @@ const getInitials = (nama: string) =>
     .toUpperCase();
 
 export default function KaryawanPage() {
-  const [data, setData] = useState<Karyawan[]>(defaultData);
+  const [data, setData] = useState<Karyawan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Karyawan | null>(null);
-  const [form, setForm] = useState<Karyawan>({ id: "", nama: "", jabatan: "", kontak: "", aktif: true });
+  const [form, setForm] = useState<Omit<Karyawan, "id">>({
+    nama: "",
+    jabatan: "",
+    kontak: "",
+    aktif: true,
+  });
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [detail, setDetail] = useState<Karyawan | null>(null);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/karyawan");
+      if (!res.ok) throw new Error("Gagal memuat karyawan");
+      const json = await res.json();
+      setData(json);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || "Gagal memuat karyawan");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const filtered = useMemo(
     () =>
@@ -43,43 +65,68 @@ export default function KaryawanPage() {
   );
 
   const reset = () => {
-    setForm({ id: "", nama: "", jabatan: "", kontak: "", aktif: true });
+    setForm({ nama: "", jabatan: "", kontak: "", aktif: true });
     setEditing(null);
     setShowForm(false);
   };
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.id || !form.nama || !form.jabatan) return;
+    if (!form.nama || !form.jabatan) return;
 
-    if (editing) {
-      setData((prev) => prev.map((item) => (item.id === editing.id ? form : item)));
-    } else {
-      setData((prev) => [...prev, form]);
+    const payload = { ...form };
+
+    try {
+      if (editing) {
+        const res = await fetch(`/api/karyawan/${editing.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error("Gagal menyimpan karyawan");
+        const updated = await res.json();
+        setData((prev) => prev.map((item) => (item.id === editing.id ? updated : item)));
+      } else {
+        const res = await fetch("/api/karyawan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error("Gagal menambah karyawan");
+        const created = await res.json();
+        setData((prev) => [created, ...prev]);
+      }
+      reset();
+    } catch (err: any) {
+      alert(err.message || "Gagal menyimpan karyawan");
     }
-    reset();
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Hapus karyawan ini?")) {
+  const handleDelete = async (id: number) => {
+    if (!confirm("Hapus karyawan ini?")) return;
+    try {
+      const res = await fetch(`/api/karyawan/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Gagal menghapus karyawan");
       setData((prev) => prev.filter((i) => i.id !== id));
       if (editing?.id === id) reset();
+    } catch (err: any) {
+      alert(err.message || "Gagal menghapus karyawan");
     }
-  };
-
-  const handleToggle = (id: string) => {
-    setData((prev) => prev.map((item) => (item.id === id ? { ...item, aktif: !item.aktif } : item)));
   };
 
   const startEdit = (item: Karyawan) => {
     setEditing(item);
-    setForm(item);
+    setForm({
+      nama: item.nama,
+      jabatan: item.jabatan,
+      kontak: item.kontak || "",
+      aktif: item.aktif,
+    });
     setShowForm(true);
   };
 
   const startAdd = () => {
-    setEditing(null);
-    setForm({ id: "", nama: "", jabatan: "", kontak: "", aktif: true });
+    reset();
     setShowForm(true);
   };
 
@@ -87,7 +134,7 @@ export default function KaryawanPage() {
     <main className="min-h-screen bg-[#f2ebdf] text-slate-900">
       <AppNavbar />
 
-      <div className="max-w-6xl mx-auto px-4 pb-12 pt-6 md:pt-10">
+      <div className="max-w-6xl mx-auto px-4 pb-12 pt-6 md:pt-10 space-y-6">
         <div className="rounded-2xl bg-white/95 border border-slate-200 shadow-xl">
           <div className="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 md:flex-row md:items-center md:justify-between">
             <div>
@@ -121,29 +168,34 @@ export default function KaryawanPage() {
               className="grid gap-3 border-b border-slate-200 bg-slate-50 px-6 py-4 md:grid-cols-5 md:items-end"
             >
               <input
-                value={form.id}
-                onChange={(e) => setForm({ ...form, id: e.target.value })}
-                placeholder="ID (cth: 104)"
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 outline-none ring-2 ring-transparent transition focus:border-amber-300 focus:ring-amber-200"
-              />
-              <input
                 value={form.nama}
                 onChange={(e) => setForm({ ...form, nama: e.target.value })}
-                placeholder="Nama"
+                placeholder="Nama lengkap"
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 outline-none ring-2 ring-transparent transition focus:border-amber-300 focus:ring-amber-200"
+                required
               />
               <input
                 value={form.jabatan}
                 onChange={(e) => setForm({ ...form, jabatan: e.target.value })}
-                placeholder="Jabatan"
+                placeholder="Role / Jabatan"
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 outline-none ring-2 ring-transparent transition focus:border-amber-300 focus:ring-amber-200"
+                required
               />
               <input
-                value={form.kontak}
+                value={form.kontak || ""}
                 onChange={(e) => setForm({ ...form, kontak: e.target.value })}
-                placeholder="Kontak"
+                placeholder="Nomor HP"
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 outline-none ring-2 ring-transparent transition focus:border-amber-300 focus:ring-amber-200"
               />
+              <label className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={form.aktif}
+                  onChange={(e) => setForm({ ...form, aktif: e.target.checked })}
+                  className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                />
+                Tampil (aktif)
+              </label>
               <div className="flex gap-2 md:col-span-1 md:justify-end">
                 <button
                   type="submit"
@@ -163,65 +215,113 @@ export default function KaryawanPage() {
           )}
 
           <div className="space-y-3 px-4 py-5 md:px-6">
-            {filtered.map((k) => (
-              <div
-                key={k.id}
-                className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm md:flex-row md:items-center"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#f2ebdf] text-base font-semibold text-slate-900 border border-slate-200">
-                    {getInitials(k.nama)}
-                  </div>
-                  <div className="leading-snug">
-                    <div className="text-base font-semibold text-[#d0382a]">{k.nama}</div>
-                    <div className="text-sm text-slate-600">
-                      {k.jabatan} <span className="text-slate-400">#{k.id}</span>
+            {loading && <div className="text-center text-slate-500">Memuat karyawan...</div>}
+            {error && (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-700">{error}</div>
+            )}
+            {!loading &&
+              !error &&
+              filtered.map((k) => (
+                <div
+                  key={k.id}
+                  className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm md:flex-row md:items-center"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#f2ebdf] text-base font-semibold text-slate-900 border border-slate-200">
+                      {getInitials(k.nama)}
+                    </div>
+                    <div className="leading-snug">
+                      <div className="text-base font-semibold text-[#d0382a]">{k.nama}</div>
+                      <div className="text-sm text-slate-600">
+                        {k.jabatan} <span className="text-slate-400">#{k.id}</span>
+                      </div>
+                      {k.kontak ? <div className="text-xs text-slate-500">HP: {k.kontak}</div> : null}
                     </div>
                   </div>
-                </div>
 
-                <div className="flex flex-1 flex-wrap items-center justify-start gap-3 md:justify-end">
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      k.aktif ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-                    }`}
-                  >
-                    {k.aktif ? "Aktif" : "Nonaktif"}
-                  </span>
-                  <button
-                    onClick={() => startEdit(k)}
-                    className="text-sm font-semibold text-blue-600 transition hover:text-blue-700"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(k.id)}
-                    className="text-sm font-semibold text-amber-600 transition hover:text-amber-700"
-                  >
-                    Hapus
-                  </button>
-                  <button
-                    onClick={() => handleToggle(k.id)}
-                    className={`rounded-full px-4 py-1 text-sm font-semibold transition ${
-                      k.aktif
-                        ? "bg-[#2563eb] text-white hover:bg-[#1e4fc7]"
-                        : "bg-slate-400 text-white hover:bg-slate-500"
-                    }`}
-                  >
-                    Tampil
-                  </button>
+                  <div className="flex flex-1 flex-wrap items-center justify-start gap-3 md:justify-end">
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                        k.aktif ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                      }`}
+                    >
+                      {k.aktif ? "Aktif" : "Nonaktif"}
+                    </span>
+                    <button onClick={() => startEdit(k)} className="text-sm font-semibold text-blue-600 transition hover:text-blue-700">
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(k.id)}
+                      className="text-sm font-semibold text-amber-600 transition hover:text-amber-700"
+                    >
+                      Hapus
+                    </button>
+                    <button
+                      onClick={() => setDetail(k)}
+                      className="rounded-full bg-[#2563eb] px-4 py-1 text-sm font-semibold text-white transition hover:bg-[#1e4fc7]"
+                    >
+                      Tampil
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
 
-            {filtered.length === 0 && (
-              <div className="rounded-xl border border-dashed border-white/10 bg-[#1f2940]/80 px-4 py-6 text-center text-slate-300">
+            {!loading && !error && filtered.length === 0 && (
+              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-slate-500">
                 Tidak ada karyawan yang cocok dengan pencarian.
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {detail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6">
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-600">Detail</p>
+                <p className="text-lg font-bold text-slate-900">{detail.nama}</p>
+                <p className="text-sm text-slate-500">
+                  {detail.jabatan} <span className="text-slate-400">#{detail.id}</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDetail(null)}
+                className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Tutup
+              </button>
+            </div>
+
+            <div className="space-y-3 px-6 py-5 text-sm text-slate-800">
+              <div className="flex items-center gap-2">
+                <span className="w-24 text-slate-500">Nama</span>
+                <span className="font-semibold text-slate-900">{detail.nama}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-24 text-slate-500">Role</span>
+                <span className="font-semibold text-slate-900">{detail.jabatan}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-24 text-slate-500">Nomor HP</span>
+                <span className="font-semibold text-slate-900">{detail.kontak || "-"}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-24 text-slate-500">Status</span>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    detail.aktif ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                  }`}
+                >
+                  {detail.aktif ? "Aktif" : "Nonaktif"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -1,31 +1,33 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import AppNavbar from "@/app/ui/app-navbar";
 import Image from "next/image";
 
 type Feedback = {
-  id: string;
-  nama: string;
-  email: string;
+  id: number;
+  nama?: string | null;
+  email?: string | null;
   pesan: string;
-  rating: number;
-  tanggal: string; // YYYY-MM-DD
+  rating?: number | null;
+  tanggal?: string | null;
+  createdAt?: string | null;
 };
 
-const getInitials = (nama: string) =>
-  nama
+const getInitials = (nama?: string | null) =>
+  (nama || "AN")
     .split(" ")
     .map((n) => n[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
 
-const StarRow = ({ rating }: { rating: number }) => {
+const StarRow = ({ rating = 0 }: { rating?: number | null }) => {
+  const val = Math.round(rating || 0);
   return (
     <div className="flex items-center gap-1 text-amber-500">
       {Array.from({ length: 5 }).map((_, i) => (
-        <span key={i} className={i < rating ? "text-amber-500" : "text-slate-300"}>
+        <span key={i} className={i < val ? "text-amber-500" : "text-slate-300"}>
           ★
         </span>
       ))}
@@ -34,30 +36,42 @@ const StarRow = ({ rating }: { rating: number }) => {
 };
 
 export default function FeedbackPage() {
-  const initial = useMemo<Feedback[]>(
-    () => [
-      { id: "F-01", nama: "Adit", email: "adit@mail.com", pesan: "Rasanya mantap, porsi pas.", rating: 5, tanggal: "2025-01-10" },
-      { id: "F-02", nama: "Dina", email: "dina@mail.com", pesan: "Pengiriman agak lama, tapi enak.", rating: 4, tanggal: "2025-02-09" },
-      { id: "F-03", nama: "Rico", email: "rico@mail.com", pesan: "Kuah terlalu asin untuk saya.", rating: 3, tanggal: "2025-02-08" },
-      { id: "F-04", nama: "Sinta", email: "", pesan: "Tempat nyaman, pelayanan cepat.", rating: 5, tanggal: "2025-03-02" },
-    ],
-    []
-  );
-
+  const [data, setData] = useState<Feedback[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/feedback");
+        if (!res.ok) throw new Error("Gagal memuat feedback");
+        const json = await res.json();
+        setData(json);
+        setError(null);
+      } catch (err: any) {
+        setError(err.message || "Gagal memuat feedback");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const monthOptions = useMemo(() => {
     const months = new Set<string>();
-    initial.forEach((f) => {
-      const ym = f.tanggal.slice(0, 7); // YYYY-MM
+    data.forEach((f) => {
+      const tgl = f.tanggal || f.createdAt;
+      if (!tgl) return;
+      const ym = tgl.slice(0, 7);
       months.add(ym);
     });
     return Array.from(months).sort().reverse();
-  }, [initial]);
+  }, [data]);
 
-  const filtered = selectedMonth === "all" ? initial : initial.filter((f) => f.tanggal.startsWith(selectedMonth));
-  const average =
-    filtered.length === 0 ? 0 : filtered.reduce((sum, f) => sum + f.rating, 0) / filtered.length;
+  const filtered = selectedMonth === "all" ? data : data.filter((f) => (f.tanggal || f.createdAt || "").startsWith(selectedMonth));
+  const average = filtered.length === 0 ? 0 : filtered.reduce((sum, f) => sum + (f.rating || 0), 0) / filtered.length;
 
   return (
     <main className="min-h-screen bg-[#f2ebdf] text-slate-900">
@@ -99,7 +113,7 @@ export default function FeedbackPage() {
               <div className="flex items-center gap-3">
                 <p className="text-4xl font-extrabold text-amber-500">{average.toFixed(1)}</p>
                 <div className="flex flex-col">
-                  <StarRow rating={Math.round(average)} />
+                  <StarRow rating={average} />
                   <span className="text-sm text-slate-500">Rata-rata ulasan</span>
                 </div>
               </div>
@@ -107,8 +121,16 @@ export default function FeedbackPage() {
               <div className="text-lg font-semibold text-slate-800">{filtered.length} Total Feedback Masuk</div>
             </div>
 
-            <div className="space-y-4">
-              {filtered.map((f) => (
+            {loading && <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-slate-500">Memuat feedback...</div>}
+            {error && (
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-6 text-center text-rose-700">
+                {error}
+              </div>
+            )}
+
+            {!loading &&
+              !error &&
+              filtered.map((f) => (
                 <div
                   key={f.id}
                   className="rounded-2xl border border-slate-200 bg-white shadow-sm px-5 py-4 flex flex-col gap-3"
@@ -120,12 +142,10 @@ export default function FeedbackPage() {
                     <div className="flex-1">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
-                          <p className="text-base font-bold text-slate-900">{f.nama}</p>
-                          <p className="text-sm text-slate-500">{f.tanggal}</p>
+                          <p className="text-base font-bold text-slate-900">{f.nama || "Anonim"}</p>
+                          <p className="text-sm text-slate-500">{f.tanggal || f.createdAt || "-"}</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <StarRow rating={f.rating} />
-                        </div>
+                        <StarRow rating={f.rating} />
                       </div>
                     </div>
                   </div>
@@ -133,12 +153,11 @@ export default function FeedbackPage() {
                 </div>
               ))}
 
-              {filtered.length === 0 && (
-                <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-6 text-center text-slate-500">
-                  Tidak ada feedback pada bulan ini.
-                </div>
-              )}
-            </div>
+            {!loading && !error && filtered.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-slate-500">
+                Tidak ada feedback pada bulan ini.
+              </div>
+            )}
           </div>
         </div>
       </div>

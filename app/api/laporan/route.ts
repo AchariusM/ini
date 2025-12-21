@@ -23,13 +23,9 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { judul, rangkuman, periodeMulai, periodeSelesai, dibuatOleh, feedbackId } = body;
 
-    if (!judul) {
-      return NextResponse.json({ error: "Judul wajib diisi" }, { status: 400 });
-    }
-
     const created = await prisma.laporan.create({
       data: {
-        judul,
+        judul: judul || "Transaksi",
         rangkuman,
         periodeMulai: periodeMulai ? new Date(periodeMulai) : undefined,
         periodeSelesai: periodeSelesai ? new Date(periodeSelesai) : undefined,

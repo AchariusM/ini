@@ -37,21 +37,23 @@ model Feedback {
   rating    Int?
   sumber    String?
   createdAt DateTime @default(now())
-  laporan   Laporan? @relation("LaporanFeedback")
+  laporanId Int?     @unique
+  laporan   Laporan? @relation("LaporanFeedback", fields: [laporanId], references: [id])
 
   @@map("feedback")
 }
 
 model Laporan {
-  id             Int       @id @default(autoincrement())
-  judul          String
+  judul          String   @default("Transaksi")
+  id             Int      @id @default(autoincrement())
+  tanggal        DateTime @default(now())
   rangkuman      String?
   periodeMulai   DateTime?
   periodeSelesai DateTime?
   dibuatOleh     String?
-  feedbackId     Int?      @unique
-  createdAt      DateTime  @default(now())
-  feedback       Feedback? @relation("LaporanFeedback", fields: [feedbackId], references: [id])
+  feedback       Feedback? @relation("LaporanFeedback")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@map("laporan")
 }

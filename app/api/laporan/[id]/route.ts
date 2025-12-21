@@ -26,7 +26,7 @@ export async function PUT(req: Request, { params }: Context) {
     const updated = await prisma.laporan.update({
       where: { id },
       data: {
-        judul,
+        judul: judul || "Transaksi",
         rangkuman,
         periodeMulai: periodeMulai ? new Date(periodeMulai) : undefined,
         periodeSelesai: periodeSelesai ? new Date(periodeSelesai) : undefined,
