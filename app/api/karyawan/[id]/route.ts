@@ -3,12 +3,12 @@ import { prisma } from "@/app/lib/prisma";
 
 export const runtime = "nodejs";
 
-type Context = { params: { id: string } };
+type KaryawanParams = { params: Promise<{ id: string }> };
 
-export async function GET(_req: Request, { params }: Context) {
+export async function GET(_req: Request, { params }: KaryawanParams) {
   try {
-    const id = Number(params.id);
-    const data = await prisma.karyawan.findUnique({ where: { id } });
+    const { id } = await params;
+    const data = await prisma.karyawan.findUnique({ where: { id: Number(id) } });
     if (!data) return NextResponse.json({ error: "Karyawan tidak ditemukan" }, { status: 404 });
     return NextResponse.json(data);
   } catch (error) {
@@ -17,14 +17,14 @@ export async function GET(_req: Request, { params }: Context) {
   }
 }
 
-export async function PUT(req: Request, { params }: Context) {
+export async function PUT(req: Request, { params }: KaryawanParams) {
   try {
-    const id = Number(params.id);
+    const { id } = await params;
     const body = await req.json();
     const { nama, jabatan, kontak, gaji, aktif } = body;
 
     const updated = await prisma.karyawan.update({
-      where: { id },
+      where: { id: Number(id) },
       data: { nama, jabatan, kontak, gaji, aktif },
     });
 
@@ -35,10 +35,10 @@ export async function PUT(req: Request, { params }: Context) {
   }
 }
 
-export async function DELETE(_req: Request, { params }: Context) {
+export async function DELETE(_req: Request, { params }: KaryawanParams) {
   try {
-    const id = Number(params.id);
-    await prisma.karyawan.delete({ where: { id } });
+    const { id } = await params;
+    await prisma.karyawan.delete({ where: { id: Number(id) } });
     return NextResponse.json({ message: "Karyawan dihapus" });
   } catch (error) {
     console.error(error);

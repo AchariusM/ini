@@ -4,12 +4,12 @@ import { Prisma } from "@prisma/client";
 
 export const runtime = "nodejs";
 
-type Context = { params: { id: string } };
+type MenuParams = { params: Promise<{ id: string }> };
 
-export async function GET(_req: Request, { params }: Context) {
+export async function GET(_req: Request, { params }: MenuParams) {
   try {
-    const id = Number(params.id);
-    const item = await prisma.menuItem.findUnique({ where: { id } });
+    const { id } = await params;
+    const item = await prisma.menuItem.findUnique({ where: { id: Number(id) } });
     if (!item) return NextResponse.json({ error: "Menu tidak ditemukan" }, { status: 404 });
     return NextResponse.json(item);
   } catch (error) {
